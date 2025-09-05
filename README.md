@@ -31,7 +31,7 @@ Connections are applied at **boot** and re-applied automatically on **USB hotplu
 
 ### 1. Clone repo
 ```bash
-git clone https://github.com/YOUR_USERNAME/midi-patchbay.git
+git clone https://github.com/shreyashag/midi-patchbay.git
 cd midi-patchbay
 ```
 
