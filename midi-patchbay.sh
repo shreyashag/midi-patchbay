@@ -1,7 +1,7 @@
 #!/bin/bash
 # MIDI Patchbay: Connect all outputs to all inputs (all ports, no self-connections)
 
-LOG_FILE="/var/log/midi-patchbay.log"
+LOG_FILE="$HOME/midi-patchbay.log"
 LOGGER_TAG="midi-patchbay"
 
 timestamp() {
@@ -32,7 +32,7 @@ apply_all_connections() {
             client=$2; 
             sub(":","",client);
             # Extract client name from single quotes
-            match($0, /'\''([^'\'']*)'\''/, name_match);
+            match($0, /'"'"'([^'"'"']*)'"'"'/, name_match);
             client_name = name_match[1];
             # Skip system clients
             if (client_name == "System" || client_name == "Midi Through" || 
@@ -52,7 +52,7 @@ apply_all_connections() {
             client=$2; 
             sub(":","",client);
             # Extract client name from single quotes
-            match($0, /'\''([^'\'']*)'\''/, name_match);
+            match($0, /'"'"'([^'"'"']*)'"'"'/, name_match);
             client_name = name_match[1];
             # Skip system clients
             if (client_name == "System" || client_name == "Midi Through" || 
