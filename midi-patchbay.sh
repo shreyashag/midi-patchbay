@@ -27,44 +27,10 @@ apply_all_connections() {
     log "Connecting ALL outputs -> ALL inputs (excluding self-connections and system clients)..."
 
     # Get all output ports (client:port) excluding system clients
-    src_ports=$(aconnect -o | awk '
-        /client/ {
-            client=$2; 
-            sub(":","",client);
-            # Extract client name from single quotes
-            match($0, /'"'"'([^'"'"']*)'"'"'/, name_match);
-            client_name = name_match[1];
-            # Skip system clients
-            if (client_name == "System" || client_name == "Midi Through" || 
-                client_name == "PipeWire-System" || client_name == "PipeWire-RT-Event") {
-                skip_client = 1;
-            } else {
-                skip_client = 0;
-            }
-        } 
-        /^[[:space:]]*[0-9]+/ && !skip_client {
-            print client":"$1
-        }')
+    src_ports=$(aconnect -o | grep -v -E "'(System|Midi Through|PipeWire-System|PipeWire-RT-Event)'" | awk '/client/ {client=$2; sub(":","",client)} /^[[:space:]]*[0-9]+/ {print client":"$1}')
     
     # Get all input ports (client:port) excluding system clients
-    dst_ports=$(aconnect -i | awk '
-        /client/ {
-            client=$2; 
-            sub(":","",client);
-            # Extract client name from single quotes
-            match($0, /'"'"'([^'"'"']*)'"'"'/, name_match);
-            client_name = name_match[1];
-            # Skip system clients
-            if (client_name == "System" || client_name == "Midi Through" || 
-                client_name == "PipeWire-System" || client_name == "PipeWire-RT-Event") {
-                skip_client = 1;
-            } else {
-                skip_client = 0;
-            }
-        } 
-        /^[[:space:]]*[0-9]+/ && !skip_client {
-            print client":"$1
-        }')
+    dst_ports=$(aconnect -i | grep -v -E "'(System|Midi Through|PipeWire-System|PipeWire-RT-Event)'" | awk '/client/ {client=$2; sub(":","",client)} /^[[:space:]]*[0-9]+/ {print client":"$1}')
 
     for src in $src_ports; do
         src_client=${src%%:*}
