@@ -37,7 +37,7 @@ apply_all_connections() {
         for dst in $dst_ports; do
             dst_client=${dst%%:*}
             # Skip connecting device to itself
-            if [[ "$src_client" != "$dst_client" ]]; then
+            if [ "$src_client" != "$dst_client" ]; then
                 if aconnect "$src" "$dst" 2>>"$LOG_FILE"; then
                     log "Connected $src -> $dst"
                 fi
