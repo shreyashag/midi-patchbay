@@ -27,13 +27,14 @@ apply_all_connections() {
     log "Connecting ALL outputs -> ALL inputs (excluding self-connections and system clients)..."
 
     # Get all output ports (client:port) excluding system clients
-    src_ports=$(aconnect -o | grep -v -E "(System|Midi Through|PipeWire-System|PipeWire-RT-Event)" | awk '/client/ {client=$2; sub(":","",client)} /^[[:space:]]*[0-9]+/ && client != "" {print client":"$1}')
+    # Note: Some virtual output ports appear in aconnect -i instead of -o due to ALSA quirks
+    src_ports_from_o=$(aconnect -o | grep -v -E "(System|Midi Through|PipeWire-System|PipeWire-RT-Event)" | awk '/client/ {client=$2; sub(":","",client)} /^[[:space:]]*[0-9]+/ && client != "" {print client":"$1}')
+    src_ports_from_i=$(aconnect -i | grep -E "(RtMidiOut|PythonMIDIClock)" | awk '/client/ {client=$2; sub(":","",client)} /^[[:space:]]*[0-9]+/ && client != "" {print client":"$1}')
+    src_ports="$src_ports_from_o $src_ports_from_i"
     
     # Get all input ports (client:port) excluding system clients  
     dst_ports=$(aconnect -i | grep -v -E "(System|Midi Through|PipeWire-System|PipeWire-RT-Event)" | awk '/client/ {client=$2; sub(":","",client)} /^[[:space:]]*[0-9]+/ && client != "" {print client":"$1}')
     
-    log "Found output ports: $src_ports"
-    log "Found input ports: $dst_ports"
 
     for src in $src_ports; do
         src_client=${src%%:*}
