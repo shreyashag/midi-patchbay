@@ -31,6 +31,9 @@ apply_all_connections() {
     
     # Get all input ports (client:port) excluding system clients  
     dst_ports=$(aconnect -i | grep -v -E "(System|Midi Through|PipeWire-System|PipeWire-RT-Event)" | awk '/client/ {client=$2; sub(":","",client)} /^[[:space:]]*[0-9]+/ && client != "" {print client":"$1}')
+    
+    log "Found output ports: $src_ports"
+    log "Found input ports: $dst_ports"
 
     for src in $src_ports; do
         src_client=${src%%:*}
