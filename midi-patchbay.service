@@ -1,13 +1,15 @@
 [Unit]
-Description=MIDI Patchbay Autoconnect
+Description=MIDI Patchbay Daemon - Auto-connect MIDI ports
 After=sound.target
 
 [Service]
-Type=oneshot
-ExecStart=/usr/local/bin/midi-patchbay.sh
+Type=simple
+ExecStart=/usr/local/bin/midi-patchbay.sh --daemon --interval 2
+Restart=always
+RestartSec=5
 StandardOutput=journal
 StandardError=journal
-RemainAfterExit=yes
+User=shreyash
 
 [Install]
 WantedBy=multi-user.target

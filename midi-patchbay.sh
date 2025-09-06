@@ -1,8 +1,12 @@
 #!/bin/bash
 # MIDI Patchbay: Connect all outputs to all inputs (all ports, no self-connections)
+# Supports daemon mode for automatic detection of new MIDI ports
 
 LOG_FILE="$HOME/midi-patchbay.log"
 LOGGER_TAG="midi-patchbay"
+DAEMON_MODE=false
+POLL_INTERVAL=2
+CLIENTS_FILE="/proc/asound/seq/clients"
 
 timestamp() {
     date +"%Y-%m-%d %H:%M:%S"
@@ -50,7 +54,81 @@ apply_all_connections() {
     done
 }
 
-log "=== MIDI Patchbay Triggered ==="
-cleanup_connections
-apply_all_connections
-log "=== Done ==="
+show_usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo "Options:"
+    echo "  -d, --daemon    Run in daemon mode (monitor for new MIDI ports)"
+    echo "  -i, --interval  Poll interval in seconds for daemon mode (default: 2)"
+    echo "  -h, --help      Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0              # Run once and exit"
+    echo "  $0 --daemon     # Run as daemon, monitoring for new ports"
+    echo "  $0 -d -i 5      # Run as daemon with 5-second poll interval"
+}
+
+get_client_list() {
+    if [ -f "$CLIENTS_FILE" ]; then
+        cat "$CLIENTS_FILE" | grep -E "Client|Port" | sort
+    else
+        aconnect -l | head -20 | sort
+    fi
+}
+
+monitor_and_connect() {
+    local last_clients=""
+    local current_clients=""
+    
+    log "=== MIDI Patchbay Daemon Started ==="
+    
+    # Initial connection
+    cleanup_connections
+    apply_all_connections
+    last_clients=$(get_client_list)
+    
+    while true; do
+        sleep "$POLL_INTERVAL"
+        current_clients=$(get_client_list)
+        
+        # Check if clients have changed
+        if [ "$current_clients" != "$last_clients" ]; then
+            log "=== MIDI Clients Changed - Reconnecting ==="
+            cleanup_connections
+            apply_all_connections
+            last_clients="$current_clients"
+        fi
+    done
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -d|--daemon)
+            DAEMON_MODE=true
+            shift
+            ;;
+        -i|--interval)
+            POLL_INTERVAL="$2"
+            shift 2
+            ;;
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            show_usage
+            exit 1
+            ;;
+    esac
+done
+
+# Main execution
+if [ "$DAEMON_MODE" = true ]; then
+    monitor_and_connect
+else
+    log "=== MIDI Patchbay Triggered ==="
+    cleanup_connections
+    apply_all_connections
+    log "=== Done ==="
+fi
